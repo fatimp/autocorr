@@ -279,38 +279,3 @@ uint64_t *ac_get_src (const struct ac_buffers *buffers) {
 uint64_t *ac_get_dst (const struct ac_buffers *buffers) {
     return buffers->dst;
 }
-
-/*
-int main () {
-    uint64_t src[] = {1, 1, 0, 1, 1, 0, 0, 1};
-    struct autocorr_buffers *buffers = alloc_autocorr_buffers (8);
-    if (buffers == NULL) {
-        printf ("AAAA!\n");
-        return 1;
-    }
-
-    memcpy(buffers->src, src, 8 * sizeof(uint64_t));
-    printf ("Autocorr %i\n", autocorr (8, buffers));
-    for (int i = 0; i < buffers->param->length; i++) {
-        printf("%lu\n", buffers->dst[i]);
-    }
-
-    free_autocorr_buffers (buffers);
-
-#define N 30000
-    buffers = alloc_autocorr_buffers (N);
-    assert (buffers != NULL);
-    for (int i = 0; i < N; i++) {
-        buffers->src[i] = random() & 1;
-    }
-    assert (autocorr (N, buffers));
-
-    for (int i = 0; i < 5000; i++) {
-        autocorr (N, buffers);
-    }
-
-    free_autocorr_buffers (buffers);
-
-    return 0;
-}
-*/
