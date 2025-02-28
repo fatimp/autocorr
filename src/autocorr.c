@@ -1,6 +1,7 @@
 #include <x86intrin.h>
 #include <string.h>
 #include "autocorr.h"
+#include "internal.h"
 
 struct gcdex_res {
     int64_t gcd;
@@ -168,32 +169,6 @@ static int ifft (const uint64_t *src, uint64_t *dst, size_t length,
 size_t ac_autocorr_length (size_t length) {
     return 1 << nsteps(2*length - 1);
 }
-
-struct params {
-    size_t   length;
-    uint64_t omega;
-    uint64_t p;
-} parameter_array[] = {
-    {2, 2, 3},
-    {4, 2, 5},
-    {8, 14, 41},
-    {16, 3, 17},
-    {32, 30, 97},
-    {64, 87, 193},
-    {128, 199, 641},
-    {256, 74, 257},
-    {512, 1704, 7681},
-    {1024, 4085, 13313},
-    {2048, 5062, 18433},
-    {4096, 2015, 12289},
-    {8192, 2821, 40961},
-    {16384, 43, 114689},
-    {32768, 31285, 163841},
-    {65536, 7659, 65537},
-    {131072, 93583, 1179649}
-};
-
-#define PARAM_LENGTH (sizeof (parameter_array) / sizeof (parameter_array[0]))
 
 static const struct params* get_autocorr_parameters (size_t length) {
     struct params* res;

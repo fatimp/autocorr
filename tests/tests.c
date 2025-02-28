@@ -4,6 +4,34 @@
 #include <CUnit/Basic.h>
 
 #include <autocorr.h>
+#include <internal.h>
+
+static int primep (uint64_t p) {
+    uint64_t n = 2;
+
+    while (1) {
+        uint64_t sqr = n * n;
+        if (sqr > p) {
+            return 1;
+        }
+
+        if (p % n == 0) {
+            return 0;
+        }
+
+        n++;
+    }
+}
+
+static uint64_t expt (uint64_t a, uint64_t n, uint64_t acc, uint64_t q) {
+    if (n == 0) {
+        return acc;
+    } else if (n % 2 == 0) {
+        return expt ((a * a) % q, n / 2, acc, q);
+    } else {
+        return expt (a, n - 1, (a * acc) % q, q);
+    }
+}
 
 static uint64_t autocorr_in_point (uint64_t *array, size_t length, size_t offset) {
     uint64_t res = 0;
@@ -15,6 +43,17 @@ static uint64_t autocorr_in_point (uint64_t *array, size_t length, size_t offset
     }
 
     return res;
+}
+
+static void test_params () {
+    for (int i = 0; i < PARAM_LENGTH; i++) {
+        struct params *param = &parameter_array[i];
+        CU_ASSERT ((param->length & (param->length - 1)) == 0);
+        CU_ASSERT ((param->omega * param->inv_omega) % param->p == 1);
+        CU_ASSERT ((param->length * param->inv_length) % param->p == 1);
+        CU_ASSERT (expt(param->omega, param->length, 1, param->p) == 1);
+        CU_ASSERT (primep (param->p));
+    }
 }
 
 #define N 5000
@@ -47,7 +86,8 @@ static void test_autocorr () {
 }
 
 static CU_TestInfo fast_autocorr_tests[] = {
-    { "Fast vs naïve", test_autocorr },
+    { "Test parameters", test_params   },
+    { "Fast vs naïve",   test_autocorr },
     CU_TEST_INFO_NULL
 };
 
