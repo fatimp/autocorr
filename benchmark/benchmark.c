@@ -24,7 +24,7 @@ int main () {
 
     double time = gettime ();
     for (int i = 0; i < M; i++) {
-        ac_autocorr (N, buffers);
+        ac_autocorr (buffers);
     }
     time = gettime() - time;
 

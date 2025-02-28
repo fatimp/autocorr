@@ -4,7 +4,7 @@
 #include <CUnit/Basic.h>
 
 #include <autocorr.h>
-#include <internal.h>
+#include <generated.h>
 
 static int primep (uint64_t p) {
     uint64_t n = 2;
@@ -71,7 +71,7 @@ static void test_autocorr () {
             src[j] = random() & 1;
         }
 
-        CU_ASSERT (ac_autocorr (n, buffers));
+        ac_autocorr (buffers);
 
         for (int j = 0; j < n/2; j++) {
             CU_ASSERT (dst[len-j-1] == autocorr_in_point (src, len, j));
@@ -117,5 +117,5 @@ int main () {
     code = (CU_get_number_of_tests_failed() == 0)? 0: EXIT_FAILURE;
     CU_cleanup_registry();
 
-    return 0;
+    return code;
 }

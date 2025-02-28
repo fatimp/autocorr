@@ -1,1 +1,21 @@
-add_library (autocorr SHARED autocorr.c)
+add_library (autocorr SHARED
+  autocorr_1.c
+  autocorr_2.c
+  autocorr_3.c
+  autocorr_4.c
+  autocorr_5.c
+  autocorr_6.c
+  autocorr_7.c
+  autocorr_8.c
+  autocorr_9.c
+  autocorr_10.c
+  autocorr_11.c
+  autocorr_12.c
+  autocorr_13.c
+  autocorr_14.c
+  autocorr_15.c
+  autocorr_16.c
+  autocorr_17.c
+  params.c
+  autocorr.c
+)
