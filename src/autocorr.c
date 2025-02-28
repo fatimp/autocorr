@@ -3,64 +3,6 @@
 #include "autocorr.h"
 #include "internal.h"
 
-struct gcdex_res {
-    int64_t gcd;
-    int64_t a;
-    int64_t b;
-};
-
-static struct gcdex_res
-gcdex_ (int64_t u, int64_t v,
-        int64_t s0, int64_t s1,
-        int64_t d0, int64_t d1) {
-    div_t tmp = div (u, v);
-    int64_t q = tmp.quot;
-    int64_t r = tmp.rem;
-    int64_t s = s0 - q * s1;
-    int64_t d = d0 - q * d1;
-    if (r == 0) {
-        struct gcdex_res res;
-        res.gcd = labs(v);
-        res.a = (v > 0) ? s1: -s1;
-        res.b = (v > 0) ? d1: -d1;
-        return res;
-    } else {
-        return gcdex_ (v, r, s1, s, d1, d);
-    }
-}
-
-static struct gcdex_res gcdex (int64_t u, int64_t v) {
-    struct gcdex_res res;
-
-    if (u == 0) {
-        res.gcd = labs (v);
-        res.a = 0;
-        res.b = (v > 0) ? 1 : 0;
-    } else if (v == 0) {
-        res.gcd = labs (u);
-        res.a = (u > 0) ? 1 : 0;
-        res.b = 0;
-    } else if (labs (u) > labs (v)) {
-        res = gcdex_ (u, v, 1, 0, 0, 1);
-    } else {
-        res = gcdex_ (v, u, 1, 0, 0, 1);
-        int64_t tmp = res.a;
-        res.a = res.b;
-        res.b = tmp;
-    }
-
-    return res;
-}
-
-static uint64_t invert_integer (uint64_t n, uint64_t q) {
-    if (n == 0) return 0;
-
-    struct gcdex_res res = gcdex (n, q);
-    if (res.gcd != 1) return 0;
-
-    return (res.a + q) % q;
-}
-
 static uint32_t nsteps (uint32_t x) {
     return _bit_scan_reverse(x - 1) + 1;
 }
@@ -144,24 +86,21 @@ static int fft (const uint64_t *src, uint64_t *dst, size_t length,
     return 1;
 }
 
-static void renormalize (uint64_t *array, size_t length, uint64_t p) {
-    uint64_t inv = invert_integer (length, p);
-
+static void renormalize (uint64_t *array, size_t length, uint64_t m, uint64_t p) {
     for (size_t i = 0; i < length; i++) {
-        array[i] = (array[i] * inv) % p;
+        array[i] = (array[i] * m) % p;
     }
 }
 
-static int ifft (const uint64_t *src, uint64_t *dst, size_t length,
-                 uint64_t omega, uint64_t p) {
+static int ifft (const uint64_t *src, uint64_t *dst, size_t length, uint64_t inv_length,
+                 uint64_t omega, uint64_t inv_omega, uint64_t p) {
     if (((length - 1) & length) != 0) {
         return 0;
     }
 
-    uint64_t inv = invert_integer (omega, p);
     reorder_input (src, dst, length);
-    _fft (dst, length, inv, p);
-    renormalize (dst, length, p);
+    _fft (dst, length, inv_omega, p);
+    renormalize (dst, length, inv_length, p);
 
     return 1;
 }
@@ -227,7 +166,7 @@ int ac_autocorr (size_t length, struct ac_buffers *buffers) {
     }
 
     size_t hl = aclength / 2;
-    uint64_t inv = invert_integer (param->omega, param->p);
+    uint64_t inv = param->inv_omega;
     buffers->dst[0]  = (buffers->dst[0]  * buffers->dst[0]) % param->p;
     buffers->dst[hl] = (buffers->dst[hl] * buffers->dst[hl] * (param->p - 1)) % param->p;
     uint64_t m1 = inv;
@@ -244,7 +183,8 @@ int ac_autocorr (size_t length, struct ac_buffers *buffers) {
         m2 = (m2 * param->omega) % param->p;
     }
 
-    return ifft (buffers->dst, buffers->dst, param->length, param->omega, param->p);
+    return ifft (buffers->dst, buffers->dst, param->length, param->inv_length,
+                 param->omega, param->inv_omega, param->p);
 }
 
 uint64_t *ac_get_src (const struct ac_buffers *buffers) {
