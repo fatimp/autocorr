@@ -1,15 +1,10 @@
-#include <x86intrin.h>
 #include "generated.h"
 
-static uint32_t nsteps (uint32_t x) {
-    return _bit_scan_reverse(x - 1) + 1;
-}
-
 static void calc_omegas (uint64_t *omegas, uint64_t omega) {
-    omegas[%%LENGTH%% - 1] = omega;
-    for (size_t i = 1; i < %%LENGTH%%; i++) {
-        uint64_t prev = omegas[%%LENGTH%%-i];
-        omegas[%%LENGTH%%-1-i] = (prev*prev) % %%PRIME%%;
+    omegas[%%STEPS%% - 1] = omega;
+    for (size_t i = 1; i < %%STEPS%%; i++) {
+        uint64_t prev = omegas[%%STEPS%%-i];
+        omegas[%%STEPS%%-1-i] = (prev*prev) % %%PRIME%%;
     }
 }
 
@@ -18,13 +13,12 @@ static void calc_omegas (uint64_t *omegas, uint64_t omega) {
  * omega is a size-th primitive root of unity in F_p
  */
 static void _fft  (uint64_t *array, uint64_t omega) {
-    uint32_t steps  = nsteps (%%LENGTH%%);
-    uint64_t *omegas = alloca(sizeof(uint64_t) * steps);
+    uint64_t *omegas = alloca(sizeof(uint64_t) * %%STEPS%%);
     calc_omegas (omegas, omega);
 
-    for (size_t s = 0; s < steps; s++) {
+    for (size_t s = 0; s < %%STEPS%%; s++) {
         size_t pair_offset = 1 << s;
-        size_t ngroups = 1 << (steps-s-1);
+        size_t ngroups = 1 << (%%STEPS%%-s-1);
         size_t group_size = pair_offset;
         uint64_t m = omegas[s];
         for (size_t i = 0; i < ngroups; i++) {
@@ -45,12 +39,11 @@ static void _fft  (uint64_t *array, uint64_t omega) {
 }
 
 static uint32_t reverse_bits (uint32_t n) {
-    uint32_t length = nsteps(%%LENGTH%%);
     uint32_t result = 0;
 
-    for (uint32_t i = 0; i < length; i++) {
+    for (uint32_t i = 0; i < %%STEPS%%; i++) {
         uint32_t bit = ((1<<i) & n) >> i;
-        result |= bit << (length - i - 1);
+        result |= bit << (%%STEPS%% - i - 1);
     }
 
     return result;
