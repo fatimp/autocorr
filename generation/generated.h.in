@@ -1,0 +1,20 @@
+#ifndef __GENERATED_H__
+#define __GENERATED_H__
+
+#include <stdint.h>
+
+struct params {
+    size_t   length;
+    uint64_t inv_length;
+    uint64_t omega;
+    uint64_t inv_omega;
+    uint64_t p;
+} parameter_array[] = {
+%%DATA%%
+};
+
+#define PARAM_LENGTH (sizeof (parameter_array) / sizeof (parameter_array[0]))
+
+%%DECLS%%
+
+#endif

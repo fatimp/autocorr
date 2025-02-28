@@ -1,0 +1,111 @@
+#include <x86intrin.h>
+#include "generated.h"
+
+static uint32_t nsteps (uint32_t x) {
+    return _bit_scan_reverse(x - 1) + 1;
+}
+
+static void calc_omegas (uint64_t *omegas, uint64_t omega) {
+    omegas[%%LENGTH%% - 1] = omega;
+    for (size_t i = 1; i < %%LENGTH%%; i++) {
+        uint64_t prev = omegas[%%LENGTH%%-i];
+        omegas[%%LENGTH%%-1-i] = (prev*prev) % %%PRIME%%;
+    }
+}
+
+/*
+ * size is a power of two.
+ * omega is a size-th primitive root of unity in F_p
+ */
+static void _fft  (uint64_t *array, uint64_t omega) {
+    uint32_t steps  = nsteps (%%LENGTH%%);
+    uint64_t *omegas = alloca(sizeof(uint64_t) * steps);
+    calc_omegas (omegas, omega);
+
+    for (size_t s = 0; s < steps; s++) {
+        size_t pair_offset = 1 << s;
+        size_t ngroups = 1 << (steps-s-1);
+        size_t group_size = pair_offset;
+        uint64_t m = omegas[s];
+        for (size_t i = 0; i < ngroups; i++) {
+            size_t group_offset = group_size * 2 * i;
+            uint64_t _m = 1;
+            for (size_t j = 0; j < group_size; j++) {
+                size_t even_idx = group_offset + j;
+                size_t odd_idx  = even_idx + pair_offset;
+                uint64_t even = array[even_idx];
+                uint64_t odd  = array[odd_idx];
+                uint64_t m_odd = (odd * _m) % %%PRIME%%;
+                array[even_idx] = (%%PRIME%% + even + m_odd) % %%PRIME%%;
+                array[odd_idx]  = (%%PRIME%% + even - m_odd) % %%PRIME%%;
+                _m = (_m * m) % %%PRIME%%;
+            }
+        }
+    }
+}
+
+static uint32_t reverse_bits (uint32_t n) {
+    uint32_t length = nsteps(%%LENGTH%%);
+    uint32_t result = 0;
+
+    for (uint32_t i = 0; i < length; i++) {
+        uint32_t bit = ((1<<i) & n) >> i;
+        result |= bit << (length - i - 1);
+    }
+
+    return result;
+}
+
+// size is a power of two.
+static void reorder_input (const uint64_t *src, uint64_t *dst) {
+    for (size_t i = 0; i < %%LENGTH%%; i++) {
+        uint32_t j = reverse_bits(i);
+        if (i <= j) {
+            uint64_t n = src[i];
+            uint64_t m = src[j];
+            dst[j] = n;
+            dst[i] = m;
+        }
+    }
+}
+
+static void fft (const uint64_t *src, uint64_t *dst) {
+    reorder_input (src, dst);
+    _fft (dst, %%OMEGA%%);
+}
+
+static void renormalize (uint64_t *array) {
+    for (size_t i = 0; i < %%LENGTH%%; i++) {
+        array[i] = (array[i] * %%ILENGTH%%) % %%PRIME%%;
+    }
+}
+
+static void ifft (const uint64_t *src, uint64_t *dst) {
+    reorder_input (src, dst);
+    _fft (dst, %%IOMEGA%%);
+    renormalize (dst);
+}
+
+void autocorr_%%LENGTH%% (const uint64_t *src, uint64_t *dst) {
+    fft (src, dst);
+
+    size_t hl = %%LENGTH%% / 2;
+    uint64_t inv = %%IOMEGA%%;
+    dst[0]  = (dst[0]  * dst[0]) % %%PRIME%%;
+    dst[hl] = (dst[hl] * dst[hl] * (%%PRIME%% - 1)) % %%PRIME%%;
+    uint64_t m1 = inv;
+    uint64_t m2 = %%OMEGA%%;
+    for (size_t i = 1; i < hl; i++) {
+        size_t j = %%LENGTH%% - i;
+        uint64_t low  = dst[i];
+        uint64_t high = dst[j];
+
+        dst[i] = (low * high * m1) % %%PRIME%%;
+        dst[j] = (low * high * m2) % %%PRIME%%;
+
+        m1 = (m1 * inv) % %%PRIME%%;
+        m2 = (m2 * %%OMEGA%%) % %%PRIME%%;
+    }
+
+    ifft (dst, dst);
+}
