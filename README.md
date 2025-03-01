@@ -8,8 +8,7 @@ finite field.
 
 Requirements:
 
-* Lua 5.4 (actually, any 5.x version will do with a small modification of the
-  code gen script.)
+* Lua 5.x
 * CMake
 * CUnit (for tests)
 
