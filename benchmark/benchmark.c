@@ -1,4 +1,6 @@
+#if defined(__FreeBSD__)
 #include <sys/timespec.h>
+#endif
 #include <assert.h>
 #include <time.h>
 #include <stdio.h>
