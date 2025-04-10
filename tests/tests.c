@@ -4,24 +4,7 @@
 #include <CUnit/Basic.h>
 
 #include <autocorr.h>
-#include <generated.h>
-
-static int primep (uint64_t p) {
-    uint64_t n = 2;
-
-    while (1) {
-        uint64_t sqr = n * n;
-        if (sqr > p) {
-            return 1;
-        }
-
-        if (p % n == 0) {
-            return 0;
-        }
-
-        n++;
-    }
-}
+#include <consts.h>
 
 static uint64_t expt (uint64_t a, uint64_t n, uint64_t acc, uint64_t q) {
     if (n == 0) {
@@ -46,13 +29,16 @@ static uint64_t autocorr_in_point (uint64_t *array, size_t length, size_t offset
 }
 
 static void test_params () {
-    for (int i = 0; i < PARAM_LENGTH; i++) {
-        struct params *param = &parameter_array[i];
-        CU_ASSERT ((param->length & (param->length - 1)) == 0);
-        CU_ASSERT ((param->omega * param->inv_omega) % param->p == 1);
-        CU_ASSERT ((param->length * param->inv_length) % param->p == 1);
-        CU_ASSERT (expt(param->omega, param->length, 1, param->p) == 1);
-        CU_ASSERT (primep (param->p));
+    for (int i = 0; i < MAX_STEPS; i++) {
+        uint64_t length = 1 << (MAX_STEPS - i);
+        uint64_t omega = _omegas[i];
+        uint64_t inv_omega = _inv_omegas[i];
+        uint64_t inv_length = _inv_lengths[i];
+
+        CU_ASSERT ((length & (length - 1)) == 0);
+        CU_ASSERT ((omega * inv_omega) % P == 1);
+        CU_ASSERT ((length * inv_length) % P == 1);
+        CU_ASSERT (expt(omega, length, 1, P) == 1);
     }
 }
 
