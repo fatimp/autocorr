@@ -1,4 +1,6 @@
 #include <x86intrin.h>
+#include <string.h>
+#include "autocorr.h"
 #include "consts.h"
 
 static uint32_t nsteps (uint32_t x) {
@@ -80,7 +82,7 @@ static void ifft (const uint64_t *src, uint64_t *dst, size_t length) {
     renormalize (dst, length);
 }
 
-void _autocorr (const uint64_t *src, uint64_t *dst, size_t length) {
+void autocorr (const uint64_t *src, uint64_t *dst, size_t length) {
     fft (src, dst, length);
 
     size_t hl = length / 2;
@@ -104,4 +106,53 @@ void _autocorr (const uint64_t *src, uint64_t *dst, size_t length) {
     }
 
     ifft (dst, dst, length);
+}
+
+// Public interface
+
+struct ac_buffers {
+    uint64_t *src;
+    uint64_t *dst;
+    size_t length;
+};
+
+size_t ac_autocorr_length (size_t length) {
+    return 1 << nsteps (2*length - 1);
+}
+
+struct ac_buffers* ac_alloc (size_t length) {
+    struct ac_buffers* buffers;
+
+    length = ac_autocorr_length (length);
+    uint32_t steps = nsteps (length);
+
+    if (MAX_STEPS - steps < 0) {
+        return NULL;
+    }
+
+    buffers = malloc(sizeof (struct ac_buffers));
+    buffers->length = length;
+    buffers->src = malloc(length * sizeof (uint64_t));
+    buffers->dst = malloc(length * sizeof (uint64_t));
+    memset (buffers->src, 0, sizeof (uint64_t) * length);
+
+    return buffers;
+}
+
+void ac_free (struct ac_buffers *buffers) {
+    free (buffers->src);
+    free (buffers->dst);
+    free (buffers);
+}
+
+void ac_autocorr (struct ac_buffers *buffers) {
+    autocorr (buffers->src, buffers->dst, buffers->length);
+}
+
+uint64_t *ac_get_src (const struct ac_buffers *buffers) {
+    return buffers->src;
+}
+
+uint64_t *ac_get_dst (const struct ac_buffers *buffers) {
+    return buffers->dst;
 }
