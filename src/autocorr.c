@@ -12,13 +12,11 @@ static uint32_t nsteps (uint32_t x) {
  * omega is a size-th primitive root of unity in F_p
  */
 static void _fft  (uint64_t *array, uint64_t *omegas, uint64_t steps) {
-    uint64_t *omgs = &omegas[MAX_STEPS - 1];
-
     for (size_t s = 0; s < steps; s++) {
         size_t pair_offset = 1 << s;
         size_t ngroups = 1 << (steps-s-1);
         size_t group_size = pair_offset;
-        uint64_t m = omgs[-s];
+        uint64_t m = omegas[s];
         for (size_t i = 0; i < ngroups; i++) {
             size_t group_offset = group_size * 2 * i;
             uint64_t _m = 1;
@@ -69,7 +67,7 @@ static void fft (const uint64_t *src, uint64_t *dst, size_t length) {
 
 static void renormalize (uint64_t *array, size_t length) {
     uint32_t steps = nsteps (length);
-    uint64_t m = _inv_lengths[MAX_STEPS - steps];
+    uint64_t m = _inv_lengths[steps - 1];
 
     for (size_t i = 0; i < length; i++) {
         array[i] = (array[i] * m) % P;
@@ -87,10 +85,10 @@ void autocorr (const uint64_t *src, uint64_t *dst, size_t length) {
 
     size_t hl = length / 2;
     uint32_t steps = nsteps (length);
-    uint64_t inv = _inv_omegas[MAX_STEPS - steps];
+    uint64_t inv = _inv_omegas[steps - 1];
     dst[0]  = (dst[0]  * dst[0]) % P;
     dst[hl] = ((dst[hl] * dst[hl] % P) * (P - 1)) % P;
-    uint64_t omega = _omegas[MAX_STEPS - steps];
+    uint64_t omega = _omegas[steps - 1];
     uint64_t m1 = inv;
     uint64_t m2 = omega;
     for (size_t i = 1; i < hl; i++) {
@@ -126,7 +124,7 @@ struct ac_buffers* ac_alloc (size_t length) {
     length = ac_autocorr_length (length);
     uint32_t steps = nsteps (length);
 
-    if (MAX_STEPS - steps < 0) {
+    if (steps > MAX_STEPS) {
         return NULL;
     }
 

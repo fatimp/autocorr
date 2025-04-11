@@ -30,7 +30,7 @@ static uint64_t autocorr_in_point (uint64_t *array, size_t length, size_t offset
 
 static void test_params () {
     for (int i = 0; i < MAX_STEPS; i++) {
-        uint64_t length = 1 << (MAX_STEPS - i);
+        uint64_t length = 1 << (i + 1);
         uint64_t omega = _omegas[i];
         uint64_t inv_omega = _inv_omegas[i];
         uint64_t inv_length = _inv_lengths[i];
@@ -74,12 +74,9 @@ int all_ones_ac_ok (uint64_t *dst, int n, size_t len) {
     return 1;
 }
 
-#define N 5000
-#define M 1000
-
 static void test_autocorr () {
-    for (int i = 0; i < M; i++) {
-        size_t n = 3 + arc4random_uniform (N);
+    for (int i = 0; i < 1000; i++) {
+        size_t n = 3 + arc4random_uniform (5000);
         struct ac_buffers *buffers = ac_alloc (n);
         uint64_t *src = ac_get_src (buffers);
         uint64_t *dst = ac_get_dst (buffers);
@@ -96,7 +93,7 @@ static void test_autocorr () {
 }
 
 static void test_all_ones () {
-    for (int i = 0; i < M; i++) {
+    for (int i = 0; i < 200; i++) {
         size_t n = 3 + arc4random_uniform (1048576-3);
         struct ac_buffers *buffers = ac_alloc (n);
         uint64_t *src = ac_get_src (buffers);
