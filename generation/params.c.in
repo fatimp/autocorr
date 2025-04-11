@@ -1,5 +1,0 @@
-#include "generated.h"
-
-struct params parameter_array[] = {
-%%DATA%%
-};

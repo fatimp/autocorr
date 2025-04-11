@@ -11,12 +11,9 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install cmake lua5.4 libcunit1-dev
+          sudo apt install cmake libcunit1-dev
       - name: Build
         run: |
-          cd generation
-          sh generate.sh
-          cd ..
           mkdir build
           cd build
           cmake -DCMAKE_BUILD_TYPE=RELEASE ..

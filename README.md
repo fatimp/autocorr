@@ -8,16 +8,14 @@ finite field.
 
 Requirements:
 
-* Lua 5.x
 * CMake
 * CUnit (for tests)
 
 Build instructions:
 
-1. cd generation && sh generate.sh
-2. cd .. && mkdir build
-3. cd build && cmake -DCMAKE_BUILD_TYPE=RELEASE ..
-4. make
+1. mkdir build
+2. cd build && cmake -DCMAKE_BUILD_TYPE=RELEASE ..
+3. make
 
 ## How to use
 
