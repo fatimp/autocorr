@@ -42,6 +42,38 @@ static void test_params () {
     }
 }
 
+int fast_ac_ok (uint64_t *dst, uint64_t *src, int n, size_t len) {
+    for (int i = 0; i < n/2; i++) {
+        if (dst[len-i-1] != autocorr_in_point (src, len, i)) {
+            return 0;
+        }
+    }
+
+    for (int i = 1; i < n/2; i++) {
+        if (dst[i-1] != autocorr_in_point (src, len, i)) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+int all_ones_ac_ok (uint64_t *dst, int n, size_t len) {
+    for (int i = 0; i < n/2; i++) {
+        if (dst[len-i-1] != n - i) {
+            return 0;
+        }
+    }
+
+    for (int i = 0; i < n/2; i++) {
+        if (dst[i] != n - i - 1) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 #define N 5000
 #define M 1000
 
@@ -54,19 +86,29 @@ static void test_autocorr () {
         size_t len = ac_autocorr_length (n);
 
         for (int j = 0; j < n; j++) {
-            src[j] = random() & 1;
+            src[j] = arc4random() & 1;
         }
 
         ac_autocorr (buffers);
+        CU_ASSERT (fast_ac_ok (dst, src, n, len));
+        ac_free (buffers);
+    }
+}
 
-        for (int j = 0; j < n/2; j++) {
-            CU_ASSERT (dst[len-j-1] == autocorr_in_point (src, len, j));
+static void test_all_ones () {
+    for (int i = 0; i < M; i++) {
+        size_t n = 3 + arc4random_uniform (1048576-3);
+        struct ac_buffers *buffers = ac_alloc (n);
+        uint64_t *src = ac_get_src (buffers);
+        uint64_t *dst = ac_get_dst (buffers);
+        size_t len = ac_autocorr_length (n);
+
+        for (int j = 0; j < n; j++) {
+            src[j] = 1;
         }
 
-        for (int j = 1; j < n/2; j++) {
-            CU_ASSERT (dst[j-1] == autocorr_in_point (src, len, j));
-        }
-
+        ac_autocorr (buffers);
+        CU_ASSERT (all_ones_ac_ok (dst, n, len));
         ac_free (buffers);
     }
 }
@@ -74,6 +116,7 @@ static void test_autocorr () {
 static CU_TestInfo fast_autocorr_tests[] = {
     { "Test parameters", test_params   },
     { "Fast vs naïve",   test_autocorr },
+    { "All ones",        test_all_ones },
     CU_TEST_INFO_NULL
 };
 
