@@ -6,6 +6,7 @@
         UBENCH_DO_BENCHMARK() {                         \
             ac_autocorr(buffers);                       \
         }                                               \
+        ac_free (buffers);                              \
     }
 
 BENCH (256)
